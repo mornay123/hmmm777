@@ -53,16 +53,22 @@
         ></el-table-column>
         <el-table-column label="操作" width="150px">
           <template slot-scope="{ row }">
-            <el-link type="primary" @click="toggleState(row)">
+            <el-link
+              :underline="false"
+              type="primary"
+              @click="toggleState(row)"
+            >
               {{ row.state === '已启用' ? '禁用' : '启用' }} </el-link
             >&nbsp;&nbsp;
             <el-link
+              :underline="false"
               :type="row.state === '已启用' ? 'info' : 'primary'"
               :disabled="row.state === '已启用' ? true : false"
               @click="edit(row)"
               >修改 </el-link
             >&nbsp;&nbsp;
             <el-link
+              :underline="false"
               :type="row.state === '已启用' ? 'info' : 'primary'"
               :disabled="row.state === '已启用' ? true : false"
               @click="del(row)"
