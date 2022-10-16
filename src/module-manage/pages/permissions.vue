@@ -164,14 +164,16 @@ export default {
       }
     },
     async addPermission () {
-      this.$refs.dialog.dialogFormV()
+      this.$refs.dialog.handleResetForm() // 重置表单
+      this.$refs.dialog.dialogFormV() // 打开弹框
       this.text = '创建'
     },
     async updatePermission (row) {
-      console.log(row)
-      this.$refs.dialog.dialogFormV()
+      // console.log(row)
+      this.$refs.dialog.handleResetForm() // 重置表单
+      this.$refs.dialog.dialogFormV() // 打开弹框
       this.text = '编辑'
-      this.$refs.dialog.hanldeEditForm(row.id)
+      this.$refs.dialog.hanldeEditForm(row.id) // 编辑详情数据加载
     },
     async delPermission (row) {
       await remove({ id: row.id })
@@ -179,12 +181,11 @@ export default {
     },
     // 取消关闭
     handleCloseModal () {
-      this.$refs.dialog.dialogFormH()
+      this.$refs.dialog.dialogFormH() // 关闭弹窗
     },
     // 修改或者添加完
     newDataes (formBase) {
-      this.$refs.dialog.handleResetForm()
-      this.getList()
+      this.getList() // 表格重绘
       this.$message.success(formBase.id ? '权限编辑成功' : '权限新增成功') // 提示信息
     }
   }
