@@ -22,7 +22,13 @@
             <div class="grid-content bg-purple">
               <el-form-item label="学科">
                 <el-select v-model="formData.subject" placeholder="请选择">
-                  <el-option label="区域一" value="shanghai"></el-option>
+                  <el-option
+                    v-for="item in simpleSubjects"
+                    :key="item.value"
+                    :label="item.label"
+                    :value="item.label"
+                    @click.native="loadCatalog"
+                  ></el-option>
                 </el-select>
               </el-form-item>
             </div>
@@ -31,7 +37,12 @@
             <div class="grid-content bg-purple-light">
               <el-form-item label="二级目录">
                 <el-select v-model="formData.catalog" placeholder="请选择">
-                  <el-option label="区域一" value="shanghai"></el-option>
+                  <el-option
+                    v-for="item in simpleCatalog"
+                    :key="item.value"
+                    :label="item.label"
+                    :value="item.label"
+                  ></el-option>
                 </el-select>
               </el-form-item>
             </div>
@@ -40,7 +51,12 @@
             <div class="grid-content bg-purple">
               <el-form-item label="标签">
                 <el-select v-model="formData.tags" placeholder="请选择">
-                  <el-option label="区域一" value="shanghai"></el-option>
+                  <el-option
+                    v-for="item in simpleTags"
+                    :key="item.value"
+                    :label="item.label"
+                    :value="item.label"
+                  ></el-option>
                 </el-select>
               </el-form-item>
             </div>
@@ -59,7 +75,12 @@
             <div class="grid-content bg-purple">
               <el-form-item label="试题类型">
                 <el-select v-model="formData.questionType" placeholder="请选择">
-                  <el-option label="区域一" value="shanghai"></el-option>
+                  <el-option
+                    v-for="item in questionType"
+                    :key="item.value"
+                    :label="item.label"
+                    :value="item.label"
+                  ></el-option>
                 </el-select>
               </el-form-item>
             </div>
@@ -68,7 +89,12 @@
             <div class="grid-content bg-purple-light">
               <el-form-item label="难度" :formatter="difficultyFormatter">
                 <el-select v-model="formData.difficulty" placeholder="请选择">
-                  <el-option label="区域一" value="shanghai"></el-option>
+                  <el-option
+                    v-for="item in difficulty"
+                    :key="item.value"
+                    :label="item.label"
+                    :value="item.label"
+                  ></el-option>
                 </el-select>
               </el-form-item>
             </div>
@@ -79,7 +105,7 @@
                 <!-- :formatter="directionFormatter" -->
                 <el-select v-model="formData.direction" placeholder="请选择">
                   <el-option
-                    v-for="(item, index) in formData.direction"
+                    v-for="(item, index) in direction"
                     :key="index"
                     :label="item"
                     :value="item"
@@ -92,7 +118,12 @@
             <div class="grid-content bg-purple-light">
               <el-form-item label="录入人">
                 <el-select v-model="formData.creatorID" placeholder="请选择">
-                  <el-option label="区域一" value="shanghai"></el-option>
+                  <el-option
+                    v-for="item in creator"
+                    :key="item.id"
+                    :label="item.username"
+                    :value="item.username"
+                  ></el-option>
                 </el-select>
               </el-form-item>
             </div>
@@ -114,30 +145,49 @@
               </el-form-item>
             </div>
           </el-col>
+
           <el-col :span="6">
             <div class="grid-content bg-purple">
               <el-form-item label="城市">
                 <el-select
-                  v-model="formData.city"
+                  v-model="formData.province"
                   placeholder="请选择"
                   class="provinceInput"
+                  @keyup.enter="handleFilter"
+                  @change="handleProvince"
+                  filterable
                 >
-                  <el-option label="区域一" value="shanghai"></el-option>
+                  <el-option
+                    v-for="item in citySelect.province"
+                    :key="item"
+                    :label="item"
+                    :value="item"
+                  ></el-option>
                 </el-select>
                 <el-select
                   v-model="formData.city"
                   placeholder="请选择"
                   class="cityInput"
+                  @keyup.enter="handleFilter"
+                  filterable
                 >
-                  <el-option label="区域一" value="shanghai"></el-option>
+                  <el-option
+                    v-for="item in citySelect.cityDate"
+                    :key="item"
+                    :label="item"
+                    :value="item"
+                  ></el-option>
                 </el-select>
               </el-form-item>
             </div>
           </el-col>
+
           <el-col :span="6">
             <div class="grid-content btnLayout">
-              <el-button size="small">清除</el-button>
-              <el-button type="primary" size="small">下载</el-button>
+              <el-button size="small" class="clearBtn">清除</el-button>
+              <el-button type="primary" size="small" click="searchBtn"
+                >搜索</el-button
+              >
             </div>
           </el-col>
         </el-row>
@@ -239,6 +289,11 @@ import { list, remove } from '../../api/hmmm/questions'
 import { difficulty, questionType, direction } from '../../api/hmmm/constants'
 import dayjs from 'dayjs'
 import QuestionsPreview from '../components/questions-preview.vue'
+import { simple } from '../../api/hmmm/subjects'
+import { simple as simpleDirectorys, list as directorysList } from '../../api/hmmm/directorys'
+import { simple as simpleTags } from '../../api/hmmm/tags'
+import { simple as simpleUsers } from '../../api/base/users'
+import { provinces, citys } from '../../api/hmmm/citys'
 
 export default {
   name: 'BasicQuestions',
@@ -251,8 +306,8 @@ export default {
         catalog: '', // 二级目录
         tags: '', // 标签
         keyword: '', // 关键词
-        questionType: 0, // 试题类型
-        difficulty: 0, //  难度
+        questionType: '', // 试题类型
+        difficulty: '', //  难度
         direction: '', // 方向
         creatorID: '', // 录入人
         remarks: '', // 题目备注
@@ -278,28 +333,113 @@ export default {
         page: 1,
         pagesize: 5
       },
+      disabled: 0,
       value: '',
       loading: false,
-      row: {}
+      row: {}, // 测试用
+      simpleSubjects: [], // 搜索框-学科-简单列表
+      simpleSubjectsId: 0, // 搜索框-学科-id
+      simpleCatalog: [], // 搜索框-二级目录
+      simpleTags: [], // 搜索框-标签
+      creator: [], // 录入人
+      citySelect: {
+        province: [],
+        cityDate: []
+      },
+      catalog2: []
     }
   },
   created () {
     this.list()
+    this.formList()
+    this.getCityData()
   },
   methods: {
     async list () {
       const { data } = await list({ ...this.tableData, ...this.page })
-      console.log(data)
+      console.log('基础题库列表', data)
       this.tableData = data.items
       this.total = data.counts
       this.page.page = data.page
       this.page.pagesize = data.pagesize
+      const data2 = await directorysList()
+      console.log('目录总列表', data2)
+      this.catalog2 = data2.data.items
+
+      this.catalog2.forEach(ele => { // 处理目录-转换常量
+        this.tableData.forEach(item => {
+          item.catalogID = ele.directoryName
+        })
+      })
     },
-    difficultyFormatter (row, column, cellValue) { // 难度-数字转化
+
+    async formList () { // 获取搜索框-学科-简单列表
+      const res = await simple({ subjectName: this.formData.subject })
+      console.log('简单学科列表', res)
+      this.simpleSubjects = res.data
+      this.simpleSubjects.forEach(ele => {
+        this.tableData.forEach(item => {
+          if (item.subjectID === ele.value) {
+            item.subjectID = ele.label
+          }
+        })
+      })
+      this.simpleCatalog.forEach(ele => { // 学科-转换数字常量
+        this.tableData.forEach(item => {
+          if (item.catalogID === ele.value) {
+            item.catalogID = ele.label
+          }
+        })
+      })
+      // 获取搜索框-录入人-简单列表
+      const res4 = await simpleUsers({ keyword: this.formData.keyword, disabled: this.disabled })
+      console.log('录入人', res4)
+      this.creator = res4.data
+    },
+
+    async loadCatalog () { // 点击搜索框-学科时触发此函数
+      this.simpleSubjects.forEach(item => {
+        if (this.formData.subject === item.label) {
+          this.simpleSubjectsId = item.value
+        }
+      })
+      if (this.simpleSubjectsId) { // 触发了学科函数,再加载二级目录
+        const res2 = await simpleDirectorys({ subjectID: this.simpleSubjectsId })
+        this.simpleCatalog = res2.data
+        console.log('二级目录', this.simpleCatalog)
+      }
+
+      const res3 = await simpleTags({ subjectID: this.simpleSubjectsId }) // 获取搜索框标签下拉框
+      console.log('标签', res3)
+      this.simpleTags = res3.data
+    },
+
+    // 获取省
+    getCityData: function () {
+      this.citySelect.province = provinces()
+    },
+    // 选省获取到市
+    // handleProvince () {
+    //   return citys(this.formData.city)
+    // },
+    handleProvince: function (e) {
+      console.log('9', e)
+      this.citySelect.cityDate = citys(e)
+      this.formData.city = this.citySelect.cityDate[0]
+    },
+
+    searchBtn () { // 搜索
+
+    },
+    clearBtn () { // 清除表单
+      this.formData = {}
+    },
+
+    difficultyFormatter (row, column, cellValue) { // 难度简单困难-数字转化
       const obj = this.difficulty.find(ele => +ele.value === +cellValue)
       return obj ? obj.label : '未知'
     },
-    questionTypeFormatter (row, column, cellValue) { // 题型-数字转化
+    questionTypeFormatter (row, column, cellValue) { // 题型单选多选-数字转化
       const obj = this.questionType.find(ele => +ele.value === +cellValue)
       // this.afterQuestionType = obj.label || ''
       // console.log('88', this.afterQuestionType)
@@ -309,8 +449,7 @@ export default {
       return dayjs(cellValue).format('YYYY-MM-DD HH:mm:ss')
     },
     handleView (row) { // 点击预览
-      console.log('444', row)
-      this.row = row
+      this.row = row // 测试用
       this.$refs.refQuestion.dialogVisible = true
     },
     async handleEdit (row) {

@@ -156,7 +156,7 @@ export default {
     },
     async getDetails () {
       const { data } = await detail(this.row)
-      console.log('666', data) // 注意:里面的questionType是字符串
+      console.log('试题详情', data) // 注意:里面的questionType是字符串
 
       questionType.forEach(item => { // 请求了数据立马处理成'单选多选简答',而不是1,2,3
         if (+data.questionType === item.value) {
