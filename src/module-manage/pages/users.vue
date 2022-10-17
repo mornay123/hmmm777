@@ -33,6 +33,7 @@
           </div>
         </el-col>
       </el-row>
+
       <!-- 表格 -->
       <el-table :data="tableData" style="width: 100%" v-loading="loading">
         <el-table-column label="序号" prop="id"> </el-table-column>
