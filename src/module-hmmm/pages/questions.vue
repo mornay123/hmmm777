@@ -64,7 +64,7 @@
           <el-col :span="6">
             <div class="grid-content bg-purple-light">
               <el-form-item label="关键词">
-                <el-input v-model="formData.keyword"></el-input>
+                <el-input v-model.trim="formData.keyword"></el-input>
               </el-form-item>
             </div>
           </el-col>
@@ -184,8 +184,8 @@
 
           <el-col :span="6">
             <div class="grid-content btnLayout">
-              <el-button size="small" class="clearBtn">清除</el-button>
-              <el-button type="primary" size="small" click="searchBtn"
+              <el-button size="small" @click="clearBtn">清除</el-button>
+              <el-button type="primary" size="small" @click="searchBtn"
                 >搜索</el-button
               >
             </div>
@@ -207,7 +207,7 @@
       <el-table :data="tableData" style="width: 100%" v-loading="loading">
         <el-table-column label="编号" prop="number"> </el-table-column>
         <el-table-column label="学科" prop="subjectID"> </el-table-column>
-        <el-table-column label="目录" prop="catalogID"> </el-table-column>
+        <el-table-column label="目录" prop="catalog"> </el-table-column>
         <el-table-column
           label="题型"
           prop="questionType"
@@ -290,7 +290,7 @@ import { difficulty, questionType, direction } from '../../api/hmmm/constants'
 import dayjs from 'dayjs'
 import QuestionsPreview from '../components/questions-preview.vue'
 import { simple } from '../../api/hmmm/subjects'
-import { simple as simpleDirectorys, list as directorysList } from '../../api/hmmm/directorys'
+import { simple as simpleDirectorys } from '../../api/hmmm/directorys'
 import { simple as simpleTags } from '../../api/hmmm/tags'
 import { simple as simpleUsers } from '../../api/base/users'
 import { provinces, citys } from '../../api/hmmm/citys'
@@ -318,7 +318,7 @@ export default {
       tableData: [{ // 表格题目列表
         number: '', // 编号
         subjectID: 0, // 学科
-        catalogID: 0, // 目录
+        catalog: '', // 目录
         questionType: 0, // 题型
         question: '', // 题干
         addDate: '', // 录入时间
@@ -345,8 +345,7 @@ export default {
       citySelect: {
         province: [],
         cityDate: []
-      },
-      catalog2: []
+      }
     }
   },
   created () {
@@ -362,15 +361,6 @@ export default {
       this.total = data.counts
       this.page.page = data.page
       this.page.pagesize = data.pagesize
-      const data2 = await directorysList()
-      console.log('目录总列表', data2)
-      this.catalog2 = data2.data.items
-
-      this.catalog2.forEach(ele => { // 处理目录-转换常量
-        this.tableData.forEach(item => {
-          item.catalogID = ele.directoryName
-        })
-      })
     },
 
     async formList () { // 获取搜索框-学科-简单列表
@@ -418,18 +408,16 @@ export default {
     getCityData: function () {
       this.citySelect.province = provinces()
     },
-    // 选省获取到市
-    // handleProvince () {
-    //   return citys(this.formData.city)
-    // },
     handleProvince: function (e) {
-      console.log('9', e)
       this.citySelect.cityDate = citys(e)
       this.formData.city = this.citySelect.cityDate[0]
     },
 
     searchBtn () { // 搜索
-
+      if (this.formData.subject || this.tableData.keyword) {
+        this.tableData.filter(item => this.formData.keyword === this.tableData.question)
+      }
+      this.list()
     },
     clearBtn () { // 清除表单
       this.formData = {}
