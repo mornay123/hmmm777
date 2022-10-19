@@ -10,13 +10,13 @@
 import { createAPI } from '@/utils/request'
 
 // 学科列表
-export const list = data => createAPI('/subjects', 'get', data)
+export const list = params => createAPI('/subjects', 'get', params)
 
 // 学科简单列表
-export const simple = data => createAPI('/subjects/simple', 'get', data)
+export const simple = params => createAPI('/subjects/simple', 'get', params)
 
 // 学科详情
-export const detail = data => createAPI(`/subjects/${data.id}`, 'get', data)
+export const detail = params => createAPI(`/subjects/${params.id}`, 'get', params)
 
 // 学科添加
 export const add = data => createAPI('/subjects', 'post', data)
