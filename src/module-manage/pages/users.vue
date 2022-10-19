@@ -4,7 +4,7 @@
       <div class="topBox">
         <span>
           <el-input
-            v-model="search"
+            v-model.trim="keyword"
             class="inputBox"
             placeholder="根据用户名搜索"
           ></el-input>
@@ -76,8 +76,8 @@
       >
       </el-pagination> -->
       <PageTool
-        @pageChange="list"
-        @pageSizeChange="list"
+        @pageChange="pageChange"
+        @pageSizeChange="pageSizeChange"
         :total="total"
         :paginationPage="page.page"
         :paginationPagesize="page.pagesize"
@@ -106,7 +106,7 @@ export default {
   components: { PageTool, UserAdd },
   data () {
     return {
-      search: '',
+      // search: '',
       tableData: [{
         id: 1,
         email: 'root@admin.com',
@@ -143,7 +143,6 @@ export default {
           keyword: this.keyword,
           disabled: this.disabled
         })
-        console.log(data)
         this.tableData = data.list
         this.total = data.counts
       } catch (error) {
@@ -152,16 +151,22 @@ export default {
         this.loading = false
       }
     },
-    clearInput () {
-      this.search = ''
+    pageChange (e) {
+      this.page.page = e
       this.list()
     },
+    pageSizeChange (e) {
+      this.page.pagesize = e
+      this.list()
+    },
+
+    clearInput () {
+      this.keyword = ''
+    },
     searchBtn () {
-      if (this.search.trim) {
-        this.tableData = this.tableData.filter(item => item.username === this.search.trim)
-      } else {
-        this.list()
-      }
+      this.tableData.filter(item => item.username === this.keyword)
+      // console.log(this.tableData.username)
+      this.list()
     },
     async addUser () { // 点击新增用户,先获取到权限简单列表
       this.dialogFormVisible = true

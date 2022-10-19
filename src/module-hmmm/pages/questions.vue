@@ -270,8 +270,8 @@
 
       <!-- 分页 -->
       <PageTool
-        @pageChange="list"
-        @pageSizeChange="list"
+        @pageChange="pageChange"
+        @pageSizeChange="pageSizeChange"
         :total="total"
         :paginationPage="page.page"
         :paginationPagesize="page.pagesize"
@@ -305,7 +305,7 @@ export default {
         subject: '',
         catalog: '', // 二级目录
         tags: '', // 标签
-        keyword: '', // 关键词
+        keyword: '', // 关键词/题干
         questionType: '', // 试题类型
         difficulty: '', //  难度
         direction: '', // 方向
@@ -362,6 +362,14 @@ export default {
       this.page.page = data.page
       this.page.pagesize = data.pagesize
     },
+    pageChange (e) {
+      this.page.page = e
+      this.list()
+    },
+    pageSizeChange (e) {
+      this.page.pagesize = e
+      this.list()
+    },
 
     async formList () { // 获取搜索框-学科-简单列表
       const res = await simple({ subjectName: this.formData.subject })
@@ -404,7 +412,7 @@ export default {
       this.simpleTags = res3.data
     },
 
-    // 获取省
+    // 获取省(已封装好,或者看city.js常量)
     getCityData: function () {
       this.citySelect.province = provinces()
     },
@@ -414,9 +422,8 @@ export default {
     },
 
     searchBtn () { // 搜索
-      if (this.formData.subject || this.tableData.keyword) {
-        this.tableData.filter(item => this.formData.keyword === this.tableData.question)
-      }
+      this.tableData.filter(item => item.question === this.formData.keyword)
+
       this.list()
     },
     clearBtn () { // 清除表单
@@ -451,15 +458,14 @@ export default {
     },
     async handleDel (row) {
       try {
-        console.log(row.id)
         await this.$confirm('此操作将永久删除该题目,是否继续?', '删除提示', {
           cancelButtonText: '取消', // 组件封装
           confirmButtonText: '确定',
           type: 'warning'
         })
         await remove(row)
-        this.list()
         this.$message.success('删除成功')
+        this.list()
       } catch (error) {
         console.log(error)
       }
