@@ -71,7 +71,6 @@ export default {
       this.cityList = getCitys(e)
       this.$emit('input', {
         province: this.provAndCity.province
-        // city: this.cityList[0]
       })
     }
   },

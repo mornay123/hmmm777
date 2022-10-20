@@ -2,10 +2,11 @@
   <div class="container catalogue">
     <el-card class="box-card">
       <div slot="header" class="clearfix">
-        <span>{{ questionForm.number ? '试题修改' : '试题录入' }}</span>
+        <span>{{ id ? '试题修改' : '试题录入' }}</span>
       </div>
       <div class="item newQuestions">
         <el-form
+          ref="form"
           label-width="120px"
           :model="questionForm"
           :rules="questionFormRules"
@@ -45,12 +46,16 @@
             </el-select>
           </el-form-item>
           <el-form-item label="城市：" class="city" prop="city">
-            <my-city v-model="questionForm"></my-city>
+            <my-city v-model="myCity"></my-city>
           </el-form-item>
           <el-form-item label="方向：" prop="direction">
             <el-select placeholder="请选择" v-model="questionForm.direction">
-              <el-option label="区域一" value="shanghai"></el-option>
-              <el-option label="区域二" value="beijing"></el-option>
+              <el-option
+                v-for="(item, index) in directionList"
+                :key="index"
+                :label="item"
+                :value="item"
+              ></el-option>
             </el-select>
           </el-form-item>
           <el-form-item label="题型：" prop="questionType">
@@ -75,11 +80,22 @@
             >
           </el-form-item>
           <el-form-item label="题干：" prop="question">
+            <mavon-editor
+              ref="md"
+              v-model="questionForm.question"
+              @change="changeQuestion"
+              class="mavonEditor"
+              :toolbars="markdownOption"
+              :ishljs="true"
+              :subfield="false"
+              :defaultOpen="id ? 'preview' : 'edit'"
+            />
           </el-form-item>
           <el-form-item label="选项：" v-if="questionForm.questionType !== '3'">
             <question-option
               :type="questionForm.questionType"
-              :optionsList="optionsList"
+              :optionsList="questionForm.options"
+              @optionData="questionForm.options = $event"
             ></question-option>
             <el-button
               type="danger"
@@ -92,7 +108,18 @@
           <el-form-item label="解析视频：">
             <el-input type="text" v-model="questionForm.videoURL" />
           </el-form-item>
-          <el-form-item label="答案解析：" prop="answer"></el-form-item>
+          <el-form-item label="答案解析：" prop="answer">
+            <mavon-editor
+              ref="md"
+              @change="changeAnswer"
+              v-model="questionForm.answer"
+              class="mavonEditor"
+              :toolbars="markdownOption"
+              :ishljs="true"
+              :subfield="false"
+              :defaultOpen="id ? 'preview' : 'edit'"
+            />
+          </el-form-item>
           <el-form-item label="题目备注：">
             <el-input
               type="textarea"
@@ -110,13 +137,13 @@
                 v-for="item in tagsList"
                 :key="item.value"
                 :label="item.label"
-                :value="item.value"
+                :value="item.label"
               ></el-option>
             </el-select>
           </el-form-item>
           <el-form-item>
-            <el-button :type="questionForm.number ? 'success' : 'primary'">{{
-              questionForm.number ? '确认修改' : '确认提交'
+            <el-button @click="submit" :type="id ? 'success' : 'primary'">{{
+              questionForm.id ? '确认修改' : '确认提交'
             }}</el-button>
           </el-form-item>
         </el-form>
@@ -127,17 +154,33 @@
 
 <script>
 import questionOption from '../components/question-option.vue'
-// import RichText from '../components/rich-text.vue'
 import { simple as dirSimple } from '@/api/hmmm/directorys.js'
 import { simple as tagSimple } from '@/api/hmmm/tags.js'
 import { simple as subSimple } from '@/api/hmmm/subjects.js'
+import { add as subData, detail, update } from '@/api/hmmm/questions.js'
 import { list } from '@/api/hmmm/companys.js'
 import MyCity from '../components/MyCity.vue'
+import { mavonEditor } from 'mavon-editor'
+import 'mavon-editor/dist/css/index.css'
 
 export default {
-  components: { questionOption, MyCity },
+  components: { questionOption, MyCity, mavonEditor },
   data () {
     return {
+      markdownOption: {
+        bold: true, // 粗体
+        italic: true, // 斜体
+        underline: true, // 下划线
+        strikethrough: true, // 中划线
+        ol: true, // 有序列表
+        ul: true, // 无序列表
+        quote: true, // 引用
+        imagelink: true, // 图片链接
+        link: true, // 链接
+        code: false, // code
+        htmlcode: false,
+        preview: true
+      },
       questionForm: {
         subjectID: '', // 学科
         catalogID: '', // 目录
@@ -148,7 +191,32 @@ export default {
         questionType: '1', // 题型
         difficulty: '1', // 难度
         question: '', // 题干
-        options: {}, // 选项
+        options: [
+          {
+            code: 'A',
+            img: '',
+            isRight: false,
+            title: ''
+          },
+          {
+            code: 'B',
+            img: '',
+            isRight: false,
+            title: ''
+          },
+          {
+            code: 'C',
+            img: '',
+            isRight: false,
+            title: ''
+          },
+          {
+            code: 'D',
+            img: '',
+            isRight: false,
+            title: ''
+          }
+        ], // 选项
         videoURL: '', // 解析视频
         answer: '', // 答案解析
         remarks: '', // 题目备注
@@ -170,7 +238,23 @@ export default {
       catalogIDList: [], // 目录列表
       enterpriseIDList: [], // 企业列表
       tagsList: [], // 企业列表
-      optionsList: ['A', 'B', 'C', 'D']
+      directionList: ['o2o', '外包服务', '企业服务', '互联网金融', '企业咨询', '互联网', '电子商务', '其他'],
+      html: '',
+      myCity: {
+        province: '', // 城市
+        city: '' // 地区
+      },
+      id: this.$route.query.id
+    }
+  },
+  watch: {
+    id: {
+      handler () {
+        if (this.id) {
+          this.editQuestionById()
+        }
+      },
+      immediate: true
     }
   },
   created () {
@@ -178,6 +262,16 @@ export default {
     this.getEnterpriseList()
   },
   methods: {
+    // 所有操作都会被解析重新渲染
+    changeQuestion (value, render) {
+      // render 为 markdown 解析后的结果[html]
+      this.questionForm.question = render
+    },
+    changeAnswer (value, render) {
+      // render 为 markdown 解析后的结果[html]
+      this.questionForm.answer = render
+      // console.log(value, this.questionForm.answer)
+    },
     // 获取学科列表
     async getSubjectsList () {
       const { data } = await subSimple()
@@ -201,21 +295,145 @@ export default {
     },
     // 增加选项
     addOption () {
-      const op = this.optionsList[this.optionsList.length - 1]
-      const m = String.fromCharCode(op.charCodeAt() + 1)
-      this.$set(this.optionsList, this.optionsList.length, m)
+      const op = this.questionForm.options[this.questionForm.options.length - 1]
+      const m = String.fromCharCode(op.code.charCodeAt() + 1)
+      const obj = {
+        code: m,
+        img: '',
+        isRight: false,
+        title: ''
+      }
+      this.$set(this.questionForm.options, this.questionForm.options.length, obj)
+      this.$forceUpdate()
     },
     changeQuestionType () {
       if (this.questionForm.questionType === '1') {
-        this.optionsList = ['A', 'B', 'C', 'D']
+        this.questionForm.options = [
+          {
+            code: 'A',
+            img: '',
+            isRight: false,
+            title: ''
+          },
+          {
+            code: 'B',
+            img: '',
+            isRight: false,
+            title: ''
+          },
+          {
+            code: 'C',
+            img: '',
+            isRight: false,
+            title: ''
+          },
+          {
+            code: 'D',
+            img: '',
+            isRight: false,
+            title: ''
+          }
+        ]
+      }
+    },
+    async editQuestionById () {
+      const { data } = await detail({ id: this.id })
+      this.myCity.province = data.province
+      this.myCity.city = data.city
+      if (data.tags) {
+        data.tags = data.tags.split(',')
+      }
+      data.options = data.options.map(item => {
+        if (item.isRight) {
+          item.isRight = true
+        } else {
+          item.isRight = false
+        }
+        return item
+      })
+      this.questionForm = data
+      this.changeSubject()
+    },
+    async submit () {
+      try {
+        this.questionForm.province = this.myCity.province
+        this.questionForm.city = this.myCity.city
+        await this.$refs.form.validate()
+        if (this.id) {
+          this.questionForm.tags = this.questionForm.tags.join(',')
+          await update(this.questionForm)
+          this.$message.success('修改成功')
+          this.id = ''
+        } else {
+          await subData(this.questionForm)
+          this.$message.success('添加成功')
+        }
+        this.$router.push('/questions/list')
+      } catch (e) {
+        console.log(e)
+      } finally {
+        this.$refs.form.resetFields()
+        this.myCity = {
+          province: '', // 城市
+          city: '' // 地区
+        }
+        this.questionForm = {
+          subjectID: '', // 学科
+          catalogID: '', // 目录
+          enterpriseID: '', // 企业
+          province: '', // 城市
+          city: '', // 地区
+          direction: '', // 方向
+          questionType: '1', // 题型
+          difficulty: '1', // 难度
+          question: '', // 题干
+          options: [
+            {
+              code: 'A',
+              img: '',
+              isRight: false,
+              title: ''
+            },
+            {
+              code: 'B',
+              img: '',
+              isRight: false,
+              title: ''
+            },
+            {
+              code: 'C',
+              img: '',
+              isRight: false,
+              title: ''
+            },
+            {
+              code: 'D',
+              img: '',
+              isRight: false,
+              title: ''
+            }
+          ], // 选项
+          videoURL: '', // 解析视频
+          answer: '', // 答案解析
+          remarks: '', // 题目备注
+          tags: ''// 试题标签
+        }
       }
     }
   }
 }
 </script>
 
-<style lang='less'>
-.newQuestions {
+<style lang='less' scoped>
+/deep/ .newQuestions {
+  .mavonEditor {
+    z-index: 0;
+    max-height: 200px !important;
+    box-shadow: #ccc 0px 0px 0px 1px !important;
+    .v-note-op {
+      border-bottom: 1px solid #ccc;
+    }
+  }
   .city {
     .el-input {
       width: 200px !important;
@@ -231,39 +449,6 @@ export default {
     .el-input__inner {
       width: 240px;
     }
-  }
-  .avatar-uploader .el-upload {
-    border: 1px dashed #d9d9d9;
-    border-radius: 6px;
-    cursor: pointer;
-    position: relative;
-    // overflow: hidden;
-  }
-  .avatar-uploader .el-upload:hover {
-    border-color: #409eff;
-  }
-  .avatar-uploader-icon {
-    position: relative;
-    display: inline-block;
-    // font-size: 28px;
-    color: #8c939d;
-    width: 100px;
-    height: 60px;
-    line-height: 60px;
-    text-align: center;
-    .iconclose {
-      position: absolute;
-      top: -9px;
-      right: -9px;
-      font-size: 18px;
-      z-index: 33;
-      background-color: #fff;
-    }
-  }
-  .avatar {
-    width: 100px;
-    height: 60px;
-    display: block;
   }
 }
 </style>

@@ -193,8 +193,8 @@ export default {
 }
 </script>
 
-<style lang='less'>
-.catalogue {
+<style lang='less' scoped>
+/deep/.catalogue {
   padding: 10px;
   .tableHeader {
     th.el-table__cell.is-leaf {
