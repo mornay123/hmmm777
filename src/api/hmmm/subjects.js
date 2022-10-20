@@ -4,7 +4,7 @@
  * @Last Modified by: taoshiwei
  * @Last Modified time: 2019-04-29 14:53:23
  *
- * 学科
+ * 学科版块
  */
 
 import { createAPI } from '@/utils/request'
@@ -13,7 +13,7 @@ import { createAPI } from '@/utils/request'
 export const list = data => createAPI('/subjects', 'get', data)
 
 // 学科简单列表
-export const simple = data => createAPI('/subjects/simple', 'get', data)
+export const simple = params => createAPI('/subjects/simple', 'get', params)
 
 // 学科详情
 export const detail = data => createAPI(`/subjects/${data.id}`, 'get', data)
