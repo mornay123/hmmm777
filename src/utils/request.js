@@ -9,6 +9,7 @@ import { getToken } from '@/utils/auth'
 const instance = axios.create({
   // baseURL: 'http://liufusong.top:7001/',
   baseURL: 'http://hmmm-api.itheima.net/',
+  // baseURL: 'http://hmmm-api.itheima.net/',
   timeout: 5000 // request timeout
 })
 
