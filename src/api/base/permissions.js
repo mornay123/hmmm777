@@ -1,10 +1,10 @@
 import { createAPI } from '@/utils/request'
 
 // 权限列表
-export const list = data => createAPI('/permissions', 'get', data)
+export const list = params => createAPI('/permissions', 'get', params)
 
 // 简单权限列表
-export const simple = data => createAPI('/permissions/simple', 'get', data)
+export const simple = params => createAPI('/permissions/simple', 'get', params)
 
 // 添加权限
 export const add = data => createAPI('/permissions', 'post', data)
@@ -16,4 +16,4 @@ export const update = data => createAPI(`/permissions/${data.id}`, 'put', data)
 export const remove = data => createAPI(`/permissions/${data.id}`, 'delete', data)
 
 // 权限详情
-export const detail = data => createAPI(`/permissions/${data.id}`, 'get', data)
+export const detail = params => createAPI(`/permissions/${params.id}`, 'get', params)
