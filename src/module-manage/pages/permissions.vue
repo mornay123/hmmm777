@@ -33,7 +33,7 @@
       >
         <span style="font-size: 13px">
           <i class="el-icon-warning" />
-          共 2 条记录
+          共 {{ counts }} 条记录
         </span>
       </el-row>
       <el-table
@@ -114,7 +114,7 @@ export default {
         page: 1,
         pagesize: 10
       },
-      counts: 20,
+      counts: 0,
       dialogFormVisible: false,
       ruleInline: {
         title: [
@@ -192,7 +192,7 @@ export default {
 }
 </script>
 
-<style lang='less'>
+<style lang='less' scoped>
 .container {
   margin: 10px;
   .el-table .head-row {
